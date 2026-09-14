@@ -172,7 +172,7 @@
 .word-visual{width:150px;height:125px;object-fit:contain;display:block;margin:auto}.word-visual-large{width:170px;height:145px;object-fit:contain;display:block;margin:0 auto}.word-visual-match{width:100%;height:100%;object-fit:contain;display:block}.word-visual-memory{width:100%;height:100%;object-fit:contain;display:block}.picture-icon,.scene,.spelling-icon{display:flex;align-items:center;justify-content:center}.match-card.image-card{padding:2px!important}.memory-card.image-memory .front{padding:2px}.word-visual-match{max-height:62px}.word-visual-memory{max-height:68px}@media(max-width:700px){.word-visual-large{width:145px;height:120px}.word-visual-match{max-height:48px}.word-visual-memory{max-height:52px}}
 
 /* v6 celebration + unlock animations */
-.level-celebration{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:rgba(20,25,45,.45);backdrop-filter:blur(3px);animation:celebrateFade .22s ease-out}
+.level-celebration{position:fixed;inset:0;z-index:9999;display:flex;pointer-events:none;align-items:center;justify-content:center;background:rgba(20,25,45,.45);backdrop-filter:blur(3px);animation:celebrateFade .22s ease-out}
 .level-celebration-card{width:min(92vw,460px);text-align:center;background:#fff;border-radius:28px;padding:34px 24px 28px;box-shadow:0 22px 70px rgba(0,0,0,.25);animation:celebratePop .5s cubic-bezier(.2,1.35,.35,1)}
 .level-trophy{font-size:72px;line-height:1;animation:trophyBounce .9s ease-in-out infinite alternate}
 .level-celebration-card h2{margin:14px 0 8px;font-size:30px}
@@ -1657,12 +1657,31 @@ function finishLevel(){
  `<div class="result-card level-unlock-flash"><div class="scene">🏆</div><h2>第 ${l} 關完成！</h2><div class="result-stars">${'⭐'.repeat(stars)}${'☆'.repeat(3-stars)}</div>
  <div class="result-stats"><div><b>${state.score}</b><span>答對</span></div><div><b>${wrongCount}</b><span>曾答錯</span></div><div><b>${stars}/3</b><span>本關星級</span></div></div>
  <p>🎉 ${levelData[l-1].title} 完成！</p>
- ${stars<3?`<p class="result-tip">💡 再挑戰一次，試著拿到 3 顆星！</p><button class="primary" id="retryLevelBtn">再挑戰第 ${l} 關</button>`:''}
- ${next?`<button class="primary" id="nextLevelBtn">前往第 ${next} 關 →</button>`:''}
- <button class="primary" id="mapBack">回到冒險地圖</button></div>`;
- if(stars<3)document.getElementById('retryLevelBtn').onclick=()=>startLevel(l);
- if(next)document.getElementById('nextLevelBtn').onclick=()=>show('level'+next);
- document.getElementById('mapBack').onclick=()=>show('map');
+ ${stars<3?`<p class="result-tip">💡 再挑戰一次，試著拿到 3 顆星！</p><button class="primary" id="retryLevelBtn${l}">再挑戰第 ${l} 關</button>`:''}
+ ${next?`<button class="primary" id="nextLevelBtn${l}">前往第 ${next} 關 →</button>`:''}
+ <button class="primary" id="mapBack${l}">回到冒險地圖</button></div>`;
+ if(stars<3)document.getElementById('retryLevelBtn'+l).onclick=()=>startLevel(l);
+ if(next){
+   const nextBtn=document.getElementById('nextLevelBtn'+l);
+   const goNext=()=>{
+     // 關閉慶祝層，直接切換到下一關，避免 show() 的導覽檢查或遮罩造成按鈕失效。
+     const overlay=document.getElementById('levelCelebration');
+     if(overlay)overlay.remove();
+     saveData.completed[l]=true;
+     persistSave();
+     document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+     const target=document.getElementById('level'+next);
+     if(!target)return;
+     target.classList.add('active');
+     document.getElementById('pageTitle').textContent=titles['level'+next]||('🗺️ 第 '+next+' 關');
+     document.getElementById('backBtn').style.visibility='visible';
+     current='level'+next;
+     window.scrollTo(0,0);
+     startLevel(next);
+   };
+   nextBtn.addEventListener('click',goNext,{once:true});
+ }
+ document.getElementById('mapBack'+l).onclick=()=>show('map');
  showLevelCelebration(l,stars,next);
 }
 </script>
